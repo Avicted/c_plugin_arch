@@ -9,6 +9,8 @@
         "cstdint": "c",
         "plugin.h": "c",
         "unistd.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "plugin_helper.h": "c",
+        "locale": "c"
     }
 }

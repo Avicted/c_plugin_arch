@@ -13,7 +13,21 @@
 
 #include "plugin.h"
 
+typedef void (*plugin_func_t)(void);
+
+typedef struct
+{
+    const char *name;
+    plugin_func_t func;
+} PluginFuncEntry;
+
 char **find_plugins(const char *directory, unsigned int *plugin_count_out);
 void handle_plugin_action(const char *plugin_name, const char *symbol, const char *action_desc);
+
+char **find_and_print_plugins(const char *plugin_dir, unsigned int *plugin_count);
+void load_plugins(char **plugin_file_names, unsigned int plugin_count);
+void run_plugins(char **plugin_file_names, unsigned int plugin_count);
+void cleanup_plugins(char **plugin_file_names, unsigned int plugin_count);
+void free_plugin_file_names(char **plugin_file_names, unsigned int plugin_count);
 
 #endif // PLUGIN_HELPER_H
