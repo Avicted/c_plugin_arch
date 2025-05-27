@@ -9,7 +9,7 @@ mkdir -p build/plugins
 CC=clang
 CFLAGS="-std=c99 -g -O0 -Wall -Wextra -Werror"
 INCLUDES="-Iinclude"
-LDLIBS="-ldl -lc -lm"
+LDLIBS="-ldl"
 
 # Compile all plugins to shared libraries
 $CC -fPIC -shared \
@@ -21,4 +21,4 @@ $CC -fPIC -shared \
     $CFLAGS $INCLUDES $LDLIBS
 
 # Compile the main program
-$CC src/main.c -o build/main $CFLAGS $LDLIBS $INCLUDES
+$CC  src/plugin_helper.c src/main.c -o build/main $CFLAGS $LDLIBS $INCLUDES
