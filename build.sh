@@ -20,4 +20,4 @@ for srcfile in src/plugins/*.c; do
 done
 
 # Compile the main program
-$CC  src/plugin_helper.c src/main.c -o build/main $CFLAGS $LDLIBS $INCLUDES
+$CC  src/plugin_helper.c src/main.c -o build/c_plugin_arch_main $CFLAGS $LDLIBS $INCLUDES

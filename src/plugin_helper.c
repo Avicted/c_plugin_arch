@@ -53,10 +53,12 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
         const char *name = entry->d_name;
         size_t len = strlen(name);
 
-        if (len > 2 && strcmp(name + len - 2, ".c") == 0)
+        const char *file_extension = ".so";
+        short file_extension_len = strlen(file_extension);
+        if (len > 2 && strcmp(name + len - file_extension_len, file_extension) == 0)
         {
-            // Remove ".c" to get the base name
-            size_t base_len = len - 2;
+            // Remove ".so" to get the base name
+            size_t base_len = len - file_extension_len;
             char *base_name = (char *)calloc(base_len + 1, sizeof(char));
             if (!base_name)
             {
@@ -99,7 +101,6 @@ void handle_plugin_action(const char *plugin_file_name, const char *symbol, cons
         return;
     }
 
-    // Use the Plugin struct from the plugin .so
     Plugin *plugin_struct = (Plugin *)dlsym(plugin_handle, plugin_file_name);
     if (!plugin_struct)
     {
@@ -155,10 +156,11 @@ char **find_and_print_plugins(const char *plugin_dir, unsigned int *plugin_count
     {
         printf("  - %s\n", plugin_file_names[i]);
     }
+
     return plugin_file_names;
 }
 
-void load_plugins(char **plugin_file_names, const unsigned int plugin_count)
+void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nLoading plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
@@ -226,7 +228,6 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
             snprintf(process_name, sizeof(process_name), "%s", plugin_struct->name);
             prctl(PR_SET_NAME, process_name, 0, 0, 0);
 
-            // Child process
             setpgid(0, 0);           // Child: move to its own process group, so it can handle signals independently
             signal(SIGINT, SIG_IGN); // Ignore SIGINT in child, as it will be handled by the parent
             sigprocmask(SIG_SETMASK, &oldset, NULL);
@@ -280,5 +281,6 @@ void free_plugin_file_names(char **plugin_file_names, const unsigned int plugin_
     {
         free(plugin_file_names[i]);
     }
+
     free(plugin_file_names);
 }

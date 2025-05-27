@@ -2,10 +2,36 @@
 #include <unistd.h>
 #include <stdio.h>
 
+static int
+set_process_id(void)
+{
+    int result = 0;
+    if (isatty(STDIN_FILENO))
+    {
+        pid_t parent_pid = getpid();
+        if (setpgid(parent_pid, parent_pid) == -1)
+        {
+            perror("setpgid failed");
+            result = 3;
+        }
+        if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
+        {
+            perror("tcsetpgrp failed");
+            result = 4;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Not running in a real terminal. Skipping process group setup.\n");
+    }
+
+    return result;
+}
+
 int main(void)
 {
     unsigned int plugin_count = 0;
-    char **plugin_file_names = find_and_print_plugins("src/plugins", &plugin_count);
+    char **plugin_file_names = find_and_print_plugins("build/plugins", &plugin_count);
 
     if (!plugin_file_names)
     {
@@ -18,21 +44,13 @@ int main(void)
         return 2;
     }
 
-    load_plugins(plugin_file_names, plugin_count);
-
-    // Set up signal handling for SIGINT: make parent the foreground process group
-    pid_t parent_pid = getpid();
-    if (setpgid(parent_pid, parent_pid) == -1)
+    int result = set_process_id();
+    if (result != 0)
     {
-        perror("ERROR: setpgid failed, Not running in a real terminal. Some features may not work.\n");
-        return 3;
-    }
-    if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
-    {
-        perror("ERROR: tcsetpgrp failed, Not running in a real terminal. Some features may not work.\n");
-        return 4;
+        return result;
     }
 
+    init_plugins(plugin_file_names, plugin_count);
     run_plugins(plugin_file_names, plugin_count);
     cleanup_plugins(plugin_file_names, plugin_count);
     free_plugin_file_names(plugin_file_names, plugin_count);

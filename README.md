@@ -15,7 +15,7 @@ To be able to handle signals properly the main program needs to be run in a term
 chmod +x build.sh
 ./build.sh
 
-./build/main
+./build/c_plugin_arch_main
 ```
 
 ### Output

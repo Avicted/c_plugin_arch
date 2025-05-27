@@ -30,7 +30,7 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out);
 void handle_plugin_action(const char *plugin_file_name, const char *symbol, const char *action_desc);
 
 char **find_and_print_plugins(const char *plugin_dir, unsigned int *plugin_count);
-void load_plugins(char **plugin_file_names, const unsigned int plugin_count);
+void init_plugins(char **plugin_file_names, const unsigned int plugin_count);
 void run_plugins(char **plugin_file_names, const unsigned int plugin_count);
 void cleanup_plugins(char **plugin_file_names, const unsigned int plugin_count);
 void free_plugin_file_names(char **plugin_file_names, const unsigned int plugin_count);
