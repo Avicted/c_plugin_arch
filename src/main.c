@@ -1,6 +1,4 @@
 #include "plugin_helper.h"
-#include <unistd.h>
-#include <stdio.h>
 
 static int
 set_process_id(void)

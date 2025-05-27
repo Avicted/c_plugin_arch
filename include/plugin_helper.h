@@ -1,20 +1,25 @@
 #ifndef PLUGIN_HELPER_H
 #define PLUGIN_HELPER_H
 
-#define _POSIX_C_SOURCE 200809L
-#include <unistd.h>
-#include <signal.h>
-#include <linux/prctl.h>
-#include <sys/prctl.h>
-
+// Standard C headers
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
-#include <dirent.h>
 #include <string.h>
 #include <stdbool.h>
+
+// POSIX headers
+#define _POSIX_C_SOURCE 200809L
+#include <unistd.h>
+
+#include <signal.h>
+#include <dlfcn.h>
+#include <dirent.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+// Linux-specific headers
+#include <linux/prctl.h>
 
 #include "plugin.h"
 
