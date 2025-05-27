@@ -6,7 +6,7 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
     DIR *dir = opendir(directory);
     if (!dir)
     {
-        perror("ERROR: opendir failed");
+        fprintf(stderr, "ERROR: opendir failed. Directory %s not found\n", directory);
         *plugin_count_out = 0;
         return NULL;
     }
