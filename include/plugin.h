@@ -4,9 +4,9 @@
 typedef struct
 {
     const char *name;
-    void (*init)();
-    void (*run)();
-    void (*cleanup)();
+    void (*init)(void);
+    void (*run)(void);
+    void (*cleanup)(void);
 } Plugin;
 
 #endif // PLUGIN_H

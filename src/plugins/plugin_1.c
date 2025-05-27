@@ -3,12 +3,12 @@
 
 #include "plugin.h"
 
-void init()
+void init(void)
 {
     printf("\tTest Plugin 1 initialized\n");
 }
 
-void run()
+void run(void)
 {
     printf("\tTest Plugin 1 running\n");
 
@@ -21,7 +21,7 @@ void run()
     }
 }
 
-void cleanup()
+void cleanup(void)
 {
     printf("\tTest Plugin 1 cleaned up\n");
 }
