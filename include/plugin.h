@@ -9,4 +9,4 @@ typedef struct
     void (*cleanup)();
 } Plugin;
 
-#endif
+#endif // PLUGIN_H
