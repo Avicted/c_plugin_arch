@@ -1,5 +1,29 @@
+#define _POSIX_C_SOURCE 200809L
+#include <unistd.h>
+#include <signal.h>
+
 #include "plugin.h"
 #include "plugin_helper.h"
+
+static pid_t *global_pids = NULL;
+static unsigned int global_plugin_count = 0;
+
+static void forward_sigusr1(int signo)
+{
+    (void)signo; // Unused parameter
+
+    printf("[parent] Received SIGINT, forwarding SIGUSR1 to children\n");
+    fflush(stdout);
+    for (unsigned int i = 0; i < global_plugin_count; ++i)
+    {
+        if (global_pids[i] > 0)
+        {
+            printf("[parent] Sending SIGUSR1 to pid %d\n", global_pids[i]);
+            fflush(stdout);
+            kill(global_pids[i], SIGUSR1);
+        }
+    }
+}
 
 char **find_plugins(const char *directory, unsigned int *plugin_count_out)
 {
@@ -134,7 +158,7 @@ char **find_and_print_plugins(const char *plugin_dir, unsigned int *plugin_count
     return plugin_file_names;
 }
 
-void load_plugins(char **plugin_file_names, unsigned int plugin_count)
+void load_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nLoading plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
@@ -143,55 +167,105 @@ void load_plugins(char **plugin_file_names, unsigned int plugin_count)
     }
 }
 
-void run_plugins(char **plugin_file_names, unsigned int plugin_count)
+void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nRunning plugins...\n");
+
+    // Block SIGINT in parent before forking
+    sigset_t blockset, oldset;
+    sigemptyset(&blockset);
+    sigaddset(&blockset, SIGINT);
+    sigprocmask(SIG_BLOCK, &blockset, &oldset);
+
     pid_t *pids = (pid_t *)calloc(plugin_count, sizeof(pid_t));
     if (!pids)
     {
         perror("ERROR: calloc failed");
-
-        // fallback to sequential execution
         for (unsigned int i = 0; i < plugin_count; ++i)
         {
             handle_plugin_action(plugin_file_names[i], "run", "ran");
         }
-    }
-    else
-    {
-        for (unsigned int i = 0; i < plugin_count; ++i)
-        {
-            pid_t pid = fork();
-            if (pid == 0)
-            {
-                // Child process
-                handle_plugin_action(plugin_file_names[i], "run", "ran");
-                exit(0);
-            }
-            else if (pid > 0)
-            {
-                // Parent process
-                pids[i] = pid;
-            }
-            else
-            {
-                perror("ERROR: fork failed");
-            }
-        }
 
-        // Wait for all children
-        for (unsigned int i = 0; i < plugin_count; ++i)
-        {
-            if (pids[i] > 0)
-            {
-                waitpid(pids[i], NULL, 0);
-            }
-        }
-        free(pids);
+        return;
     }
+
+    global_pids = pids;
+    global_plugin_count = plugin_count;
+
+    // Set up SIGINT handler in parent
+    struct sigaction sa;
+    sa.sa_handler = forward_sigusr1;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+
+    for (unsigned int i = 0; i < plugin_count; ++i)
+    {
+        pid_t pid = fork();
+        if (pid == 0)
+        {
+            // Set the process name
+            char path[256];
+            snprintf(path, sizeof(path), "./build/plugins/%s.so", plugin_file_names[i]);
+            void *plugin_handle = dlopen(path, RTLD_LAZY);
+            if (!plugin_handle)
+            {
+                fprintf(stderr, "ERROR: dlopen failed for %s: %s\n", path, dlerror());
+                return;
+            }
+
+            Plugin *plugin_struct = (Plugin *)dlsym(plugin_handle, plugin_file_names[i]);
+            if (!plugin_struct)
+            {
+                fprintf(stderr, "ERROR: dlsym failed to find Plugin struct '%s' in %s: %s\n", plugin_file_names[i], path, dlerror());
+                dlclose(plugin_handle);
+                return;
+            }
+
+            char process_name[256];
+            snprintf(process_name, sizeof(process_name), "%s", plugin_struct->name);
+            prctl(PR_SET_NAME, process_name, 0, 0, 0);
+
+            // Child process
+            setpgid(0, 0);           // Child: move to its own process group, so it can handle signals independently
+            signal(SIGINT, SIG_IGN); // Ignore SIGINT in child, as it will be handled by the parent
+            sigprocmask(SIG_SETMASK, &oldset, NULL);
+            handle_plugin_action(plugin_file_names[i], "run", "ran");
+            exit(0);
+        }
+        else if (pid > 0)
+        {
+            global_pids[i] = pid;
+            printf("[parent] Forked child %d for plugin %s\n", pid, plugin_file_names[i]);
+        }
+        else
+        {
+            perror("ERROR: fork failed");
+        }
+    }
+
+    // Unblock SIGINT in parent after forking
+    sigprocmask(SIG_SETMASK, &oldset, NULL);
+
+    // Wait for all children
+    for (unsigned int i = 0; i < plugin_count; ++i)
+    {
+        if (pids[i] > 0)
+        {
+            waitpid(pids[i], NULL, 0);
+            printf("\tPlugin %s finished running\n", plugin_file_names[i]);
+        }
+    }
+
+    // Restore default signal handler
+    signal(SIGINT, SIG_DFL);
+
+    free(pids);
+    global_pids = NULL;
+    global_plugin_count = 0;
 }
 
-void cleanup_plugins(char **plugin_file_names, unsigned int plugin_count)
+void cleanup_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nCleaning up plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
@@ -200,7 +274,7 @@ void cleanup_plugins(char **plugin_file_names, unsigned int plugin_count)
     }
 }
 
-void free_plugin_file_names(char **plugin_file_names, unsigned int plugin_count)
+void free_plugin_file_names(char **plugin_file_names, const unsigned int plugin_count)
 {
     for (unsigned int i = 0; i < plugin_count; ++i)
     {

@@ -11,6 +11,8 @@
         "unistd.h": "c",
         "types.h": "c",
         "plugin_helper.h": "c",
-        "locale": "c"
+        "locale": "c",
+        "stop_token": "c",
+        "cstdlib": "c"
     }
 }

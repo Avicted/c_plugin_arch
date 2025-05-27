@@ -1,4 +1,6 @@
 #include "plugin_helper.h"
+#include <unistd.h>
+#include <stdio.h>
 
 int main(void)
 {
@@ -17,6 +19,20 @@ int main(void)
     }
 
     load_plugins(plugin_file_names, plugin_count);
+
+    // Set up signal handling for SIGINT: make parent the foreground process group
+    pid_t parent_pid = getpid();
+    if (setpgid(parent_pid, parent_pid) == -1)
+    {
+        perror("ERROR: setpgid failed, Not running in a real terminal. Some features may not work.\n");
+        return 3;
+    }
+    if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
+    {
+        perror("ERROR: tcsetpgrp failed, Not running in a real terminal. Some features may not work.\n");
+        return 4;
+    }
+
     run_plugins(plugin_file_names, plugin_count);
     cleanup_plugins(plugin_file_names, plugin_count);
     free_plugin_file_names(plugin_file_names, plugin_count);
