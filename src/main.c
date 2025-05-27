@@ -3,9 +3,9 @@
 int main(void)
 {
     unsigned int plugin_count = 0;
-    char **plugin_names = find_plugins("src/plugins", &plugin_count);
+    char **plugin_file_names = find_plugins("src/plugins", &plugin_count);
 
-    if (!plugin_names)
+    if (!plugin_file_names)
     {
         fprintf(stderr, "No plugins found or error occurred.\n");
         return 1;
@@ -14,13 +14,13 @@ int main(void)
     printf("Found %u plugins:\n", plugin_count);
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        printf("  - %s\n", plugin_names[i]);
+        printf("  - %s\n", plugin_file_names[i]);
     }
     printf("\nLoading plugins...\n");
 
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        handle_plugin_action(plugin_names[i], "init", "loaded and initialized");
+        handle_plugin_action(plugin_file_names[i], "init", "Loaded and initialized");
     }
 
     printf("\nRunning plugins...\n");
@@ -32,7 +32,7 @@ int main(void)
         // fallback to sequential execution
         for (unsigned int i = 0; i < plugin_count; ++i)
         {
-            handle_plugin_action(plugin_names[i], "run", "ran");
+            handle_plugin_action(plugin_file_names[i], "run", "ran");
         }
     }
     else
@@ -43,7 +43,7 @@ int main(void)
             if (pid == 0)
             {
                 // Child process
-                handle_plugin_action(plugin_names[i], "run", "ran");
+                handle_plugin_action(plugin_file_names[i], "run", "ran");
                 exit(0);
             }
             else if (pid > 0)
@@ -71,14 +71,14 @@ int main(void)
     printf("\nCleaning up plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        handle_plugin_action(plugin_names[i], "cleanup", "cleaned up");
+        handle_plugin_action(plugin_file_names[i], "cleanup", "Cleaned up");
     }
 
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        free(plugin_names[i]);
+        free(plugin_file_names[i]);
     }
-    free(plugin_names);
+    free(plugin_file_names);
 
     return 0;
 }

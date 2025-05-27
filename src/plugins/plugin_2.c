@@ -5,23 +5,30 @@
 
 void init()
 {
-    printf("Plugin 2 initialized\n");
+    printf("\tTest Plugin 2 initialized\n");
 }
 
 void run()
 {
-    printf("Plugin 2 running\n");
+    printf("\tTest Plugin 2 running\n");
 
     // Simulate some work
     for (int i = 0; i < 5; ++i)
     {
         // Simulate a delay
         sleep(1);
-        printf("Plugin 2 working... %d\n", i + 1);
+        printf("\tTest Plugin 2 working... %d\n", i + 1);
     }
 }
 
 void cleanup()
 {
-    printf("Plugin 2 cleaned up\n");
+    printf("\tTest Plugin 2 cleaned up\n");
 }
+
+Plugin plugin_2 = {
+    .name = "Test Plugin 2",
+    .init = init,
+    .run = run,
+    .cleanup = cleanup,
+};

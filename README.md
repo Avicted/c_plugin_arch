@@ -13,32 +13,37 @@ Found 2 plugins:
   - plugin_2
 
 Loading plugins...
-Plugin 1 initialized
-        Successfully loaded and initialized plugin: plugin_1
-Plugin 2 initialized
-        Successfully loaded and initialized plugin: plugin_2
+        Test Plugin 1 initialized
+        Successfully Loaded and initialized plugin: Test Plugin 1
+
+        Test Plugin 2 initialized
+        Successfully Loaded and initialized plugin: Test Plugin 2
+
 
 Running plugins...
-Plugin 1 running
-Plugin 2 running
-Plugin 1 working... 1
-Plugin 2 working... 1
-Plugin 1 working... 2
-Plugin 2 working... 2
-Plugin 1 working... 3
-Plugin 2 working... 3
-Plugin 1 working... 4
-Plugin 2 working... 4
-Plugin 1 working... 5
-        Successfully ran plugin: plugin_1
-Plugin 2 working... 5
-        Successfully ran plugin: plugin_2
+        Test Plugin 1 running
+        Test Plugin 2 running
+        Test Plugin 1 working... 1
+        Test Plugin 2 working... 1
+        Test Plugin 1 working... 2
+        Test Plugin 2 working... 2
+        Test Plugin 1 working... 3
+        Test Plugin 2 working... 3
+        Test Plugin 1 working... 4
+        Test Plugin 2 working... 4
+        Test Plugin 1 working... 5
+        Successfully ran plugin: Test Plugin 1
+
+        Test Plugin 2 working... 5
+        Successfully ran plugin: Test Plugin 2
+
 
 Cleaning up plugins...
-Plugin 1 cleaned up
-        Successfully cleaned up plugin: plugin_1
-Plugin 2 cleaned up
-        Successfully cleaned up plugin: plugin_2
+        Test Plugin 1 cleaned up
+        Successfully Cleaned up plugin: Test Plugin 1
+
+        Test Plugin 2 cleaned up
+        Successfully Cleaned up plugin: Test Plugin 2
 ```
 
 ### License
