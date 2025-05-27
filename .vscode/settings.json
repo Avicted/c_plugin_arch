@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "macros.h": "c",
+        "raylib.h": "c",
+        "raymath.h": "c",
+        "chrono": "c",
+        "functional": "c",
+        "compare": "c",
+        "cstdint": "c",
+        "plugin.h": "c",
+        "unistd.h": "c",
+        "types.h": "c"
+    }
+}
