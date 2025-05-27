@@ -5,6 +5,13 @@ Each plugin can be loaded, initialized, run, and cleaned up, allowing for modula
 
 The plugins perform simulated work. They run in parallel, and each plugin can be independently loaded and executed.
 
+### Build and Run
+```bash
+chmod +x build.sh
+./build.sh
+
+./build/main
+```
 
 ### Output
 ```bash

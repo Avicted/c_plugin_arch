@@ -12,13 +12,12 @@ INCLUDES="-Iinclude"
 LDLIBS="-ldl"
 
 # Compile all plugins to shared libraries
-$CC -fPIC -shared \
-    -o build/plugins/plugin_1.so src/plugins/plugin_1.c \
-    $CFLAGS $INCLUDES $LDLIBS
-
-$CC -fPIC -shared \
-    -o build/plugins/plugin_2.so src/plugins/plugin_2.c \
-    $CFLAGS $INCLUDES $LDLIBS
+for srcfile in src/plugins/*.c; do
+    plugin_name=$(basename "$srcfile" .c)
+    $CC -fPIC -shared \
+        -o build/plugins/${plugin_name}.so "$srcfile" \
+        $CFLAGS $INCLUDES $LDLIBS
+done
 
 # Compile the main program
 $CC  src/plugin_helper.c src/main.c -o build/main $CFLAGS $LDLIBS $INCLUDES
