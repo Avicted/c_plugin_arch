@@ -25,10 +25,3 @@ void cleanup()
 {
     printf("Plugin 2 cleaned up\n");
 }
-
-Plugin plugin = {
-    .name = "TestPlugin 2",
-    .init = init,
-    .run = run,
-    .cleanup = cleanup,
-};
