@@ -31,7 +31,7 @@ set_process_id(void)
 int main(void)
 {
     unsigned int plugin_count = 0;
-    char **plugin_file_names = find_and_print_plugins("build/plugins", &plugin_count);
+    char **plugin_file_names = find_plugins("build/plugins", &plugin_count);
 
     if (!plugin_file_names)
     {

@@ -13,6 +13,7 @@
         "plugin_helper.h": "c",
         "locale": "c",
         "stop_token": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "string.h": "c"
     }
 }

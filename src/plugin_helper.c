@@ -87,6 +87,19 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
 
     closedir(dir);
     *plugin_count_out = count;
+
+    if (!plugin_file_names)
+    {
+        fprintf(stderr, "No plugins found or error occurred.\n");
+        return NULL;
+    }
+
+    printf("Found %u plugins:\n", *plugin_count_out);
+    for (unsigned int i = 0; i < *plugin_count_out; ++i)
+    {
+        printf("  - %s\n", plugin_file_names[i]);
+    }
+
     return plugin_file_names;
 }
 
@@ -139,25 +152,6 @@ void handle_plugin_action(const char *plugin_file_name, const char *symbol, cons
     }
 
     dlclose(plugin_handle);
-}
-
-char **find_and_print_plugins(const char *plugin_dir, unsigned int *plugin_count)
-{
-    char **plugin_file_names = find_plugins(plugin_dir, plugin_count);
-
-    if (!plugin_file_names)
-    {
-        fprintf(stderr, "No plugins found or error occurred.\n");
-        return NULL;
-    }
-
-    printf("Found %u plugins:\n", *plugin_count);
-    for (unsigned int i = 0; i < *plugin_count; ++i)
-    {
-        printf("  - %s\n", plugin_file_names[i]);
-    }
-
-    return plugin_file_names;
 }
 
 void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
