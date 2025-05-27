@@ -33,39 +33,33 @@ Loading plugins...
 
 
 Running plugins...
-[parent] Forked child 147473 for plugin plugin_1
-[parent] Forked child 147474 for plugin plugin_2
-	Test Plugin 2 running
+[parent] Forked child 154335 for plugin plugin_1
+[parent] Forked child 154336 for plugin plugin_2
 	Test Plugin 1 running
+	Test Plugin 2 running
 	Test Plugin 1 working... 1
 	Test Plugin 2 working... 1
 	Test Plugin 1 working... 2
 	Test Plugin 2 working... 2
 	Test Plugin 1 working... 3
 	Test Plugin 2 working... 3
-	Test Plugin 2 working... 4
 	Test Plugin 1 working... 4
-	Test Plugin 1 working... 5
+	Test Plugin 2 working... 4
 	Test Plugin 2 working... 5
-	Test Plugin 1 working... 6
+	Test Plugin 1 working... 5
 	Test Plugin 2 working... 6
+	Test Plugin 1 working... 6
 	Test Plugin 2 working... 7
 	Test Plugin 1 working... 7
-	Test Plugin 2 working... 8
 	Test Plugin 1 working... 8
+	Test Plugin 2 working... 8
 	Test Plugin 1 working... 9
 	Test Plugin 2 working... 9
 	Test Plugin 1 working... 10
+	Test Plugin 2 working... 10
 	Successfully ran plugin: Test Plugin 1
 
-	Test Plugin 2 working... 10
-	Test Plugin 1 cleaned up
-	Successfully Cleaned up plugin: Test Plugin 1
-
 	Successfully ran plugin: Test Plugin 2
-
-	Test Plugin 2 cleaned up
-	Successfully Cleaned up plugin: Test Plugin 2
 
 	Plugin plugin_1 finished running
 	Plugin plugin_2 finished running
@@ -76,7 +70,6 @@ Cleaning up plugins...
 
 	Test Plugin 2 cleaned up
 	Successfully Cleaned up plugin: Test Plugin 2
-
 ```
 
 ### License
