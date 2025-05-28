@@ -21,7 +21,7 @@ typedef enum
 } PluginAction;
 
 static const char *plugin_action_names[] = {
-    "init",
+    "initialized",
     "ran",
     "cleanup",
 };

@@ -26,37 +26,37 @@ Found 2 plugins:
 
 Loading plugins...
 	Test Plugin 1 initialized
-	Successfully init plugin: Test Plugin 1 (initialized).
+	Successfully initialized plugin: Test Plugin 1 (initialized).
 	Test Plugin 2 initialized
-	Successfully init plugin: Test Plugin 2 (initialized).
+	Successfully initialized plugin: Test Plugin 2 (initialized).
 
 Running plugins...
-[parent] Forked child 180051 for plugin Test Plugin 1
-[parent] Forked child 180052 for plugin Test Plugin 2
+[parent] Forked child 5296 for plugin Test Plugin 1
+[parent] Forked child 5297 for plugin Test Plugin 2
 	Test Plugin 1 running
 	Test Plugin 2 running
-	Test Plugin 1 working... 1
 	Test Plugin 2 working... 1
-	Test Plugin 1 working... 2
+	Test Plugin 1 working... 1
 	Test Plugin 2 working... 2
-	Test Plugin 1 working... 3
+	Test Plugin 1 working... 2
 	Test Plugin 2 working... 3
-	Test Plugin 1 working... 4
+	Test Plugin 1 working... 3
 	Test Plugin 2 working... 4
-	Test Plugin 1 working... 5
+	Test Plugin 1 working... 4
 	Test Plugin 2 working... 5
-	Test Plugin 1 working... 6
+	Test Plugin 1 working... 5
 	Test Plugin 2 working... 6
+	Test Plugin 1 working... 6
 	Test Plugin 1 working... 7
 	Test Plugin 2 working... 7
-	Test Plugin 1 working... 8
 	Test Plugin 2 working... 8
-	Test Plugin 1 working... 9
+	Test Plugin 1 working... 8
 	Test Plugin 2 working... 9
-	Test Plugin 1 working... 10
-	Successfully ran plugin: Test Plugin 1 (ran to completion).
+	Test Plugin 1 working... 9
 	Test Plugin 2 working... 10
+	Test Plugin 1 working... 10
 	Successfully ran plugin: Test Plugin 2 (ran to completion).
+	Successfully ran plugin: Test Plugin 1 (ran to completion).
 	Plugin plugin_1 finished running
 	Plugin plugin_2 finished running
 

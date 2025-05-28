@@ -1,31 +1,5 @@
 #include "plugin_helper.h"
 
-static int
-set_process_id(void)
-{
-    int result = 0;
-    if (isatty(STDIN_FILENO))
-    {
-        pid_t parent_pid = getpid();
-        if (setpgid(parent_pid, parent_pid) == -1)
-        {
-            perror("ERROR: setpgid failed");
-            result = 3;
-        }
-        if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
-        {
-            perror("ERROR: tcsetpgrp failed");
-            result = 4;
-        }
-    }
-    else
-    {
-        fprintf(stderr, "ERROR: Not running in a real terminal. Skipping process group setup.\n");
-    }
-
-    return result;
-}
-
 int main(void)
 {
     unsigned int plugin_count = 0;

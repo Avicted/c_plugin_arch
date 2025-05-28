@@ -9,6 +9,31 @@ static Plugin *global_plugin_instances = NULL;
 static unsigned int global_plugin_count = 0;
 static char **plugin_file_names = NULL;
 
+int set_process_id(void)
+{
+    int result = 0;
+    if (isatty(STDIN_FILENO))
+    {
+        pid_t parent_pid = getpid();
+        if (setpgid(parent_pid, parent_pid) == -1)
+        {
+            perror("ERROR: setpgid failed");
+            result = 3;
+        }
+        if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
+        {
+            perror("ERROR: tcsetpgrp failed");
+            result = 4;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "ERROR: Not running in a real terminal. Skipping process group setup.\n");
+    }
+
+    return result;
+}
+
 void forward_sigusr1(int signo)
 {
     (void)signo; // Unused parameter

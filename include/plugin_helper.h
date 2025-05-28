@@ -25,6 +25,7 @@
 
 #include "plugin.h"
 
+int set_process_id(void);
 void forward_sigusr1(int signo);
 time_t get_mtime(const char *path);
 
