@@ -238,8 +238,8 @@ void init_plugins(char **plugin_file_names, const size_t plugin_count)
             continue;
         }
 
-        global_plugin_instances[i].name = plugin_file_names[i];
         global_plugin_instances[i] = *plugin_instance;
+        global_plugin_instances[i].name = plugin_file_names[i];
         global_plugin_instances[i].pid = -1; // Initialize pid to -1 (not running)
         global_plugin_instances[i].dl_handle = plugin_handle;
 
