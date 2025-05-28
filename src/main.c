@@ -38,7 +38,7 @@ int main(void)
     if (plugin_count <= 0)
     {
         fprintf(stderr, "No plugins found. Exiting.\n");
-        free_plugin_file_names(plugin_file_names, plugin_count);
+        free_plugins(plugin_count);
         return 2;
     }
 
@@ -50,8 +50,8 @@ int main(void)
 
     init_plugins(plugin_file_names, plugin_count);
     run_plugins(plugin_file_names, plugin_count);
-    cleanup_plugins(plugin_file_names, plugin_count);
-    free_plugin_file_names(plugin_file_names, plugin_count);
+    cleanup_plugins(plugin_count);
+    free_plugins(plugin_count);
 
     return 0;
 }

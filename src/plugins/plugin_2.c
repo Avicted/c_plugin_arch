@@ -20,17 +20,17 @@ static void handle_sigusr1(int signo)
 void init(void)
 {
     printf("\tTest Plugin 2 initialized\n");
+}
+
+void run(void)
+{
+    printf("\tTest Plugin 2 running\n");
 
     struct sigaction sa;
     sa.sa_handler = handle_sigusr1;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGUSR1, &sa, NULL);
-}
-
-void run(void)
-{
-    printf("\tTest Plugin 2 running\n");
 
     // Simulate some work in the plugin
     for (int i = 0; i < 10; ++i)

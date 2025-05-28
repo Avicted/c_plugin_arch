@@ -5,8 +5,9 @@
 #include "plugin.h"
 #include "plugin_helper.h"
 
-static pid_t *global_pids = NULL;
+static Plugin *global_plugin_instances = NULL;
 static unsigned int global_plugin_count = 0;
+static char **plugin_file_names = NULL;
 
 static void forward_sigusr1(int signo)
 {
@@ -16,13 +17,24 @@ static void forward_sigusr1(int signo)
     fflush(stdout);
     for (unsigned int i = 0; i < global_plugin_count; ++i)
     {
-        if (global_pids[i] > 0)
+        if (global_plugin_instances[i].pid > 0)
         {
-            printf("[parent] Sending SIGUSR1 to pid %d\n", global_pids[i]);
+            printf("[parent] Sending SIGUSR1 to pid %d\n", global_plugin_instances[i].pid);
             fflush(stdout);
-            kill(global_pids[i], SIGUSR1);
+            kill(global_plugin_instances[i].pid, SIGUSR1);
         }
     }
+}
+
+static time_t get_mtime(const char *path)
+{
+    struct stat st;
+    if (stat(path, &st) == 0)
+    {
+        return st.st_mtime;
+    }
+
+    return 0;
 }
 
 char **find_plugins(const char *directory, unsigned int *plugin_count_out)
@@ -39,7 +51,7 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
     unsigned int capacity = 8;
     unsigned int count = 0;
 
-    char **plugin_file_names = (char **)calloc(capacity, sizeof(char *));
+    plugin_file_names = (char **)calloc(capacity, sizeof(char *));
     if (!plugin_file_names)
     {
         perror("ERROR: calloc failed");
@@ -103,63 +115,83 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
     return plugin_file_names;
 }
 
-void handle_plugin_action(const char *plugin_file_name, const char *symbol, const char *action_desc)
+void handle_plugin_action(Plugin *plugin_instance, const char *symbol, const char *action_desc)
 {
-    char path[256];
-    snprintf(path, sizeof(path), "./build/plugins/%s.so", plugin_file_name);
-    void *plugin_handle = dlopen(path, RTLD_LAZY);
-    if (!plugin_handle)
-    {
-        fprintf(stderr, "ERROR: dlopen failed for %s: %s\n", path, dlerror());
-        return;
-    }
-
-    Plugin *plugin_struct = (Plugin *)dlsym(plugin_handle, plugin_file_name);
-    if (!plugin_struct)
-    {
-        fprintf(stderr, "ERROR: dlsym failed to find Plugin struct '%s' in %s: %s\n", plugin_file_name, path, dlerror());
-        dlclose(plugin_handle);
-        return;
-    }
-
-    const char *plugin_name = plugin_struct->name;
     void (*plugin_func)(void) = NULL;
 
-    PluginFuncEntry plugin_funcs[] = {
-        {"init", plugin_struct->init},
-        {"run", plugin_struct->run},
-        {"cleanup", plugin_struct->cleanup},
-    };
-
-    plugin_func = NULL;
-    for (int i = 0; plugin_funcs[i].name != NULL; ++i)
+    if (strcmp(symbol, "init") == 0)
     {
-        if (strcmp(symbol, plugin_funcs[i].name) == 0)
-        {
-            plugin_func = plugin_funcs[i].func;
-            break;
-        }
+        plugin_func = plugin_instance->init;
+    }
+    else if (strcmp(symbol, "run") == 0)
+    {
+        plugin_func = plugin_instance->run;
+    }
+    else if (strcmp(symbol, "cleanup") == 0)
+    {
+        plugin_func = plugin_instance->cleanup;
     }
 
     if (plugin_func)
     {
         plugin_func();
-        printf("\tSuccessfully %s plugin: %s\n\n", action_desc, plugin_name);
+        printf("\tSuccessfully %s plugin: %s.\n", action_desc, plugin_instance->name);
     }
     else
     {
-        fprintf(stderr, "ERROR: Plugin struct for %s does not have function '%s'\n", plugin_name, symbol);
+        fprintf(stderr, "ERROR: Plugin struct for %s does not have function '%s'\n", plugin_instance->name, symbol);
     }
-
-    dlclose(plugin_handle);
 }
 
 void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nLoading plugins...\n");
+
+    Plugin *plugin_instances = (Plugin *)calloc(plugin_count, sizeof(Plugin));
+    if (!plugin_instances)
+    {
+        perror("ERROR: calloc failed for plugin instances");
+        return;
+    }
+
+    global_plugin_instances = plugin_instances;
+    global_plugin_count = plugin_count;
+
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        handle_plugin_action(plugin_file_names[i], "init", "Loaded and initialized");
+        char path[256];
+        snprintf(path, sizeof(path), "./build/plugins/%s.so", plugin_file_names[i]);
+        void *plugin_handle = dlopen(path, RTLD_LAZY);
+        if (!plugin_handle)
+        {
+            fprintf(stderr, "ERROR: dlopen failed for %s: %s\n", path, dlerror());
+            continue;
+        }
+
+        Plugin *plugin_instance = (Plugin *)dlsym(plugin_handle, plugin_file_names[i]);
+        if (!plugin_instance)
+        {
+            fprintf(stderr, "ERROR: dlsym failed to find Plugin struct '%s' in %s: %s\n", plugin_file_names[i], path, dlerror());
+            dlclose(plugin_handle);
+            continue;
+        }
+
+        plugin_instance->dl_handle = plugin_handle;
+
+        plugin_instance->last_modified = get_mtime(path);
+        if (plugin_instance->last_modified == 0)
+        {
+            fprintf(stderr, "ERROR: Could not get last modified time for %s\n", path);
+            dlclose(plugin_handle);
+            continue;
+        }
+
+        global_plugin_instances[i].name = plugin_file_names[i];
+        global_plugin_instances[i] = *plugin_instance;
+        global_plugin_instances[i].pid = -1; // Initialize pid to -1 (not running)
+        global_plugin_instances[i].dl_handle = plugin_handle;
+
+        handle_plugin_action(&global_plugin_instances[i], "init", "initialized");
     }
 }
 
@@ -173,21 +205,6 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
     sigaddset(&blockset, SIGINT);
     sigprocmask(SIG_BLOCK, &blockset, &oldset);
 
-    pid_t *pids = (pid_t *)calloc(plugin_count, sizeof(pid_t));
-    if (!pids)
-    {
-        perror("ERROR: calloc failed");
-        for (unsigned int i = 0; i < plugin_count; ++i)
-        {
-            handle_plugin_action(plugin_file_names[i], "run", "ran");
-        }
-
-        return;
-    }
-
-    global_pids = pids;
-    global_plugin_count = plugin_count;
-
     // Set up SIGINT handler in parent
     struct sigaction sa;
     sa.sa_handler = forward_sigusr1;
@@ -197,40 +214,28 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
 
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
+        Plugin *plugin_instance = &global_plugin_instances[i];
         pid_t pid = fork();
-        if (pid == 0)
+
+        if (pid == 0) // Child process
         {
-            // Set the process name
-            char path[256];
-            snprintf(path, sizeof(path), "./build/plugins/%s.so", plugin_file_names[i]);
-            void *plugin_handle = dlopen(path, RTLD_LAZY);
-            if (!plugin_handle)
-            {
-                fprintf(stderr, "ERROR: dlopen failed for %s: %s\n", path, dlerror());
-                return;
-            }
-
-            Plugin *plugin_struct = (Plugin *)dlsym(plugin_handle, plugin_file_names[i]);
-            if (!plugin_struct)
-            {
-                fprintf(stderr, "ERROR: dlsym failed to find Plugin struct '%s' in %s: %s\n", plugin_file_names[i], path, dlerror());
-                dlclose(plugin_handle);
-                return;
-            }
-
+            // Set child process name to plugin name
             char process_name[256];
-            snprintf(process_name, sizeof(process_name), "%s", plugin_struct->name);
+            snprintf(process_name, sizeof(process_name), "%s", plugin_instance->name);
             prctl(PR_SET_NAME, process_name, 0, 0, 0);
 
-            setpgid(0, 0);           // Child: move to its own process group, so it can handle signals independently
-            signal(SIGINT, SIG_IGN); // Ignore SIGINT in child, as it will be handled by the parent
+            setpgid(0, 0);
+            signal(SIGINT, SIG_IGN);
             sigprocmask(SIG_SETMASK, &oldset, NULL);
-            handle_plugin_action(plugin_file_names[i], "run", "ran");
+
+            handle_plugin_action(plugin_instance, "run", "ran");
+            handle_plugin_action(plugin_instance, "cleanup", "cleaned up");
             exit(0);
         }
-        else if (pid > 0)
+        else if (pid > 0) // Parent process
         {
-            global_pids[i] = pid;
+            prctl(PR_SET_NAME, "c_plugin_arch_main", 0, 0, 0);
+            global_plugin_instances[i].pid = pid;
             printf("[parent] Forked child %d for plugin %s\n", pid, plugin_file_names[i]);
         }
         else
@@ -245,36 +250,44 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
     // Wait for all children
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        if (pids[i] > 0)
+        if (global_plugin_instances[i].pid > 0)
         {
-            waitpid(pids[i], NULL, 0);
+            waitpid(global_plugin_instances[i].pid, NULL, 0);
             printf("\tPlugin %s finished running\n", plugin_file_names[i]);
         }
     }
 
     // Restore default signal handler
     signal(SIGINT, SIG_DFL);
-
-    free(pids);
-    global_pids = NULL;
-    global_plugin_count = 0;
 }
 
-void cleanup_plugins(char **plugin_file_names, const unsigned int plugin_count)
+void cleanup_plugins(const unsigned int plugin_count)
 {
     printf("\nCleaning up plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        handle_plugin_action(plugin_file_names[i], "cleanup", "Cleaned up");
+        handle_plugin_action(&global_plugin_instances[i], "cleanup", "cleaned up");
     }
 }
 
-void free_plugin_file_names(char **plugin_file_names, const unsigned int plugin_count)
+void free_plugins(const unsigned int plugin_count)
 {
+    for (unsigned int i = 0; i < plugin_count; ++i)
+    {
+        if (global_plugin_instances[i].dl_handle)
+        {
+            dlclose(global_plugin_instances[i].dl_handle);
+        }
+    }
+
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
         free(plugin_file_names[i]);
     }
 
     free(plugin_file_names);
+
+    free(global_plugin_instances);
+    global_plugin_instances = NULL;
+    global_plugin_count = 0;
 }
