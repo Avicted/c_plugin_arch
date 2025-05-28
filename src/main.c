@@ -9,18 +9,18 @@ set_process_id(void)
         pid_t parent_pid = getpid();
         if (setpgid(parent_pid, parent_pid) == -1)
         {
-            perror("setpgid failed");
+            perror("ERROR: setpgid failed");
             result = 3;
         }
         if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
         {
-            perror("tcsetpgrp failed");
+            perror("ERROR: tcsetpgrp failed");
             result = 4;
         }
     }
     else
     {
-        fprintf(stderr, "Not running in a real terminal. Skipping process group setup.\n");
+        fprintf(stderr, "ERROR: Not running in a real terminal. Skipping process group setup.\n");
     }
 
     return result;
@@ -33,11 +33,13 @@ int main(void)
 
     if (!plugin_file_names)
     {
+        fprintf(stderr, "ERROR: No plugin file names found.\n");
+        free_plugins(plugin_count);
         return 1;
     }
     if (plugin_count <= 0)
     {
-        fprintf(stderr, "No plugins found. Exiting.\n");
+        fprintf(stderr, "ERROR: No plugins found in the directory.\n");
         free_plugins(plugin_count);
         return 2;
     }
