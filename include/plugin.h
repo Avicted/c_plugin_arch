@@ -3,22 +3,40 @@
 
 typedef struct
 {
-    void (*init)(void);
-    void (*run)(void);
-    void (*cleanup)(void);
-
     const char *name;
     time_t last_modified;
     pid_t pid;
     void *dl_handle;
+
+    void (*init)(void);
+    void (*run)(void);
+    void (*cleanup)(void);
 } Plugin;
 
-typedef void (*plugin_func_t)(void);
-
-typedef struct
+typedef enum
 {
-    const char *name;
-    plugin_func_t func;
-} PluginFuncEntry;
+    PLUGIN_ACTION_INIT,
+    PLUGIN_ACTION_RUN,
+    PLUGIN_ACTION_CLEANUP,
+} PluginAction;
+
+static const char *plugin_action_names[] = {
+    "init",
+    "run",
+    "cleanup",
+};
+
+typedef enum
+{
+    PLUGIN_STATE_INITIALIZED,
+    PLUGIN_STATE_RUNNING,
+    PLUGIN_STATE_TERMINATED,
+} PluginState;
+
+static const char *plugin_state_names[] = {
+    "initialized",
+    "running",
+    "terminated",
+};
 
 #endif // PLUGIN_H

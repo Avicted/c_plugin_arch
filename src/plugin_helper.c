@@ -115,31 +115,42 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
     return plugin_file_names;
 }
 
-void handle_plugin_action(Plugin *plugin_instance, const char *symbol, const char *action_desc)
+void handle_plugin_action(Plugin *plugin_instance, PluginAction action, PluginState state)
 {
     void (*plugin_func)(void) = NULL;
+    const char *action_desc = plugin_action_names[action];
+    const char *state_desc = plugin_state_names[state];
 
-    if (strcmp(symbol, "init") == 0)
+    if (!plugin_instance)
     {
+        fprintf(stderr, "ERROR: Plugin instance is NULL\n");
+        return;
+    }
+
+    switch (action)
+    {
+    case PLUGIN_ACTION_INIT:
         plugin_func = plugin_instance->init;
-    }
-    else if (strcmp(symbol, "run") == 0)
-    {
+        break;
+    case PLUGIN_ACTION_RUN:
         plugin_func = plugin_instance->run;
-    }
-    else if (strcmp(symbol, "cleanup") == 0)
-    {
+        break;
+    case PLUGIN_ACTION_CLEANUP:
         plugin_func = plugin_instance->cleanup;
+        break;
+    default:
+        fprintf(stderr, "ERROR: Unknown plugin action (%d)\n", action);
+        return;
     }
 
     if (plugin_func)
     {
         plugin_func();
-        printf("\tSuccessfully %s plugin: %s.\n", action_desc, plugin_instance->name);
+        printf("\tSuccessfully %s plugin: %s (%s).\n", action_desc, plugin_instance->name, state_desc);
     }
     else
     {
-        fprintf(stderr, "ERROR: Plugin struct for %s does not have function '%s'\n", plugin_instance->name, symbol);
+        fprintf(stderr, "ERROR: Plugin '%s' does not implement action '%s'\n", plugin_instance->name, action_desc);
     }
 }
 
@@ -191,7 +202,7 @@ void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
         global_plugin_instances[i].pid = -1; // Initialize pid to -1 (not running)
         global_plugin_instances[i].dl_handle = plugin_handle;
 
-        handle_plugin_action(&global_plugin_instances[i], "init", "initialized");
+        handle_plugin_action(&global_plugin_instances[i], PLUGIN_ACTION_INIT, PLUGIN_STATE_INITIALIZED);
     }
 }
 
@@ -228,7 +239,8 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
             signal(SIGINT, SIG_IGN);
             sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-            handle_plugin_action(plugin_instance, "run", "ran");
+            // handle_plugin_action(plugin_instance, "run", "ran");
+            handle_plugin_action(plugin_instance, PLUGIN_ACTION_RUN, PLUGIN_STATE_RUNNING);
             exit(0);
         }
         else if (pid > 0) // Parent process
@@ -265,7 +277,8 @@ void cleanup_plugins(const unsigned int plugin_count)
     printf("\nCleaning up plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        handle_plugin_action(&global_plugin_instances[i], "cleanup", "cleaned up");
+        // handle_plugin_action(&global_plugin_instances[i], "cleanup", "cleaned up");
+        handle_plugin_action(&global_plugin_instances[i], PLUGIN_ACTION_CLEANUP, PLUGIN_STATE_TERMINATED);
     }
 }
 

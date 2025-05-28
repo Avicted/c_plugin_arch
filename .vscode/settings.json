@@ -17,6 +17,7 @@
         "string.h": "c",
         "text_encoding": "c",
         "typeindex": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "ios": "c"
     }
 }
