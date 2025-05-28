@@ -9,7 +9,7 @@ static Plugin *global_plugin_instances = NULL;
 static unsigned int global_plugin_count = 0;
 static char **plugin_file_names = NULL;
 
-static void forward_sigusr1(int signo)
+void forward_sigusr1(int signo)
 {
     (void)signo; // Unused parameter
 
@@ -26,7 +26,7 @@ static void forward_sigusr1(int signo)
     }
 }
 
-static time_t get_mtime(const char *path)
+time_t get_mtime(const char *path)
 {
     struct stat st;
     if (stat(path, &st) == 0)
