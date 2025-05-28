@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    unsigned int plugin_count = 0;
+    size_t plugin_count = 0;
     char **plugin_file_names = find_plugins("build/plugins", &plugin_count);
 
     if (!plugin_file_names)

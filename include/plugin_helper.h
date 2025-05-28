@@ -29,12 +29,12 @@ int set_process_id(void);
 void forward_sigusr1(int signo);
 time_t get_mtime(const char *path);
 
-char **find_plugins(const char *directory, unsigned int *plugin_count_out);
+char **find_plugins(const char *directory, size_t *plugin_count_out);
 void handle_plugin_action(Plugin *plugin_instance, PluginAction action, PluginState state);
-void free_plugins(const unsigned int plugin_count);
+void free_plugins(const size_t plugin_count);
 
-void init_plugins(char **plugin_file_names, const unsigned int plugin_count);
-void run_plugins(char **plugin_file_names, const unsigned int plugin_count);
-void cleanup_plugins(const unsigned int plugin_count);
+void init_plugins(char **plugin_file_names, const size_t plugin_count);
+void run_plugins(char **plugin_file_names, const size_t plugin_count);
+void cleanup_plugins(const size_t plugin_count);
 
 #endif // PLUGIN_HELPER_H

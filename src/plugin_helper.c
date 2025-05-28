@@ -5,8 +5,11 @@
 #include "plugin.h"
 #include "plugin_helper.h"
 
+#define MAX_PLUGIN_NAME_LENGTH 256
+#define MAX_PLUGIN_PATH_LENGTH 512
+
 static Plugin *global_plugin_instances = NULL;
-static unsigned int global_plugin_count = 0;
+static size_t global_plugin_count = 0;
 static char **plugin_file_names = NULL;
 
 int set_process_id(void)
@@ -48,7 +51,7 @@ void forward_sigusr1(int signo)
     // It forwards SIGUSR1 to all child plugin processes, asking them to terminate gracefully.
     printf("[parent] Received SIGINT, forwarding SIGUSR1 to children\n");
     fflush(stdout);
-    for (unsigned int i = 0; i < global_plugin_count; ++i)
+    for (size_t i = 0; i < global_plugin_count; ++i)
     {
         if (global_plugin_instances[i].pid > 0)
         {
@@ -70,7 +73,7 @@ time_t get_mtime(const char *path)
     return 0;
 }
 
-char **find_plugins(const char *directory, unsigned int *plugin_count_out)
+char **find_plugins(const char *directory, size_t *plugin_count_out)
 {
     DIR *dir = opendir(directory);
     if (!dir)
@@ -81,8 +84,8 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
     }
 
     struct dirent *entry;
-    unsigned int capacity = 8;
-    unsigned int count = 0;
+    size_t capacity = 8;
+    size_t count = 0;
 
     plugin_file_names = (char **)calloc(capacity, sizeof(char *));
     if (!plugin_file_names)
@@ -139,8 +142,8 @@ char **find_plugins(const char *directory, unsigned int *plugin_count_out)
         return NULL;
     }
 
-    printf("Found %u plugins:\n", *plugin_count_out);
-    for (unsigned int i = 0; i < *plugin_count_out; ++i)
+    printf("Found %zu plugins:\n", *plugin_count_out);
+    for (size_t i = 0; i < *plugin_count_out; ++i)
     {
         printf("  - %s\n", plugin_file_names[i]);
     }
@@ -187,7 +190,7 @@ void handle_plugin_action(Plugin *plugin_instance, PluginAction action, PluginSt
     }
 }
 
-void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
+void init_plugins(char **plugin_file_names, const size_t plugin_count)
 {
     printf("\nLoading plugins...\n");
 
@@ -201,9 +204,9 @@ void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
     global_plugin_instances = plugin_instances;
     global_plugin_count = plugin_count;
 
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
-        char path[256];
+        char path[MAX_PLUGIN_PATH_LENGTH];
         snprintf(path, sizeof(path), "./build/plugins/%s.so", plugin_file_names[i]);
         void *plugin_handle = dlopen(path, RTLD_LAZY);
         if (!plugin_handle)
@@ -244,7 +247,7 @@ void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
     }
 }
 
-void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
+void run_plugins(char **plugin_file_names, const size_t plugin_count)
 {
     printf("\nRunning plugins...\n");
 
@@ -262,7 +265,7 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
         Plugin *plugin_instance = &global_plugin_instances[i];
         pid_t pid = fork();
@@ -270,7 +273,7 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
         if (pid == 0)
         {
             // Set child process name to plugin name for easier debugging.
-            char process_name[256];
+            char process_name[MAX_PLUGIN_NAME_LENGTH];
             snprintf(process_name, sizeof(process_name), "%s", plugin_instance->name);
             prctl(PR_SET_NAME, process_name, 0, 0, 0);
 
@@ -304,7 +307,7 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
     sigprocmask(SIG_SETMASK, &oldset, NULL);
 
     // Wait for all children to finish.
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
         if (global_plugin_instances[i].pid > 0)
         {
@@ -321,18 +324,18 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
     signal(SIGINT, SIG_DFL);
 }
 
-void cleanup_plugins(const unsigned int plugin_count)
+void cleanup_plugins(const size_t plugin_count)
 {
     printf("\nCleaning up plugins...\n");
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
         handle_plugin_action(&global_plugin_instances[i], PLUGIN_ACTION_CLEANUP, PLUGIN_STATE_TERMINATED);
     }
 }
 
-void free_plugins(const unsigned int plugin_count)
+void free_plugins(const size_t plugin_count)
 {
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
         if (global_plugin_instances[i].dl_handle)
         {
@@ -340,7 +343,7 @@ void free_plugins(const unsigned int plugin_count)
         }
     }
 
-    for (unsigned int i = 0; i < plugin_count; ++i)
+    for (size_t i = 0; i < plugin_count; ++i)
     {
         free(plugin_file_names[i]);
     }
