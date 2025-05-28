@@ -229,7 +229,6 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
             sigprocmask(SIG_SETMASK, &oldset, NULL);
 
             handle_plugin_action(plugin_instance, "run", "ran");
-            handle_plugin_action(plugin_instance, "cleanup", "cleaned up");
             exit(0);
         }
         else if (pid > 0) // Parent process

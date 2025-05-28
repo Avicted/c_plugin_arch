@@ -31,22 +31,22 @@ Loading plugins...
 	Successfully initialized plugin: Test Plugin 2.
 
 Running plugins...
-[parent] Forked child 146825 for plugin plugin_1
-[parent] Forked child 146826 for plugin plugin_2
+[parent] Forked child 154209 for plugin plugin_1
+[parent] Forked child 154210 for plugin plugin_2
 	Test Plugin 1 running
 	Test Plugin 2 running
 	Test Plugin 1 working... 1
 	Test Plugin 2 working... 1
 	Test Plugin 1 working... 2
 	Test Plugin 2 working... 2
-	Test Plugin 2 working... 3
 	Test Plugin 1 working... 3
-	Test Plugin 1 working... 4
+	Test Plugin 2 working... 3
 	Test Plugin 2 working... 4
-	Test Plugin 1 working... 5
+	Test Plugin 1 working... 4
 	Test Plugin 2 working... 5
-	Test Plugin 1 working... 6
+	Test Plugin 1 working... 5
 	Test Plugin 2 working... 6
+	Test Plugin 1 working... 6
 	Test Plugin 2 working... 7
 	Test Plugin 1 working... 7
 	Test Plugin 2 working... 8
@@ -54,13 +54,9 @@ Running plugins...
 	Test Plugin 2 working... 9
 	Test Plugin 1 working... 9
 	Test Plugin 2 working... 10
-	Test Plugin 1 working... 10
 	Successfully ran plugin: Test Plugin 2.
+	Test Plugin 1 working... 10
 	Successfully ran plugin: Test Plugin 1.
-	Test Plugin 2 cleaned up
-	Test Plugin 1 cleaned up
-	Successfully cleaned up plugin: Test Plugin 2.
-	Successfully cleaned up plugin: Test Plugin 1.
 	Plugin plugin_1 finished running
 	Plugin plugin_2 finished running
 
