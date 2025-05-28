@@ -12,8 +12,6 @@ static volatile sig_atomic_t stop_requested = 0;
 static void handle_sigusr1(int signo)
 {
     (void)signo; // Unused parameter
-    printf("[child] Received SIGUSR1\n");
-    fflush(stdout);
     stop_requested = 1;
 }
 

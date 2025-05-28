@@ -14,12 +14,18 @@ int set_process_id(void)
     int result = 0;
     if (isatty(STDIN_FILENO))
     {
+        // Set the parent as its own process group leader.
+        // This ensures that only the parent receives SIGINT (Ctrl+C) from the terminal,
+        // and not the child plugin processes.
         pid_t parent_pid = getpid();
         if (setpgid(parent_pid, parent_pid) == -1)
         {
             perror("ERROR: setpgid failed");
             result = 3;
         }
+
+        // Set the parent as the foreground process group for the terminal.
+        // This is required so that the terminal sends signals (like SIGINT) to the parent.
         if (tcsetpgrp(STDIN_FILENO, parent_pid) == -1)
         {
             perror("ERROR: tcsetpgrp failed");
@@ -38,6 +44,8 @@ void forward_sigusr1(int signo)
 {
     (void)signo; // Unused parameter
 
+    // This handler is called when the parent receives SIGINT (Ctrl+C).
+    // It forwards SIGUSR1 to all child plugin processes, asking them to terminate gracefully.
     printf("[parent] Received SIGINT, forwarding SIGUSR1 to children\n");
     fflush(stdout);
     for (unsigned int i = 0; i < global_plugin_count; ++i)
@@ -212,6 +220,11 @@ void init_plugins(char **plugin_file_names, const unsigned int plugin_count)
             continue;
         }
 
+        if (!plugin_instance->init || !plugin_instance->run || !plugin_instance->cleanup)
+        {
+            fprintf(stderr, "ERROR: Plugin '%s' missing required function(s)\n", plugin_file_names[i]);
+        }
+
         plugin_instance->dl_handle = plugin_handle;
 
         plugin_instance->last_modified = get_mtime(path);
@@ -235,13 +248,14 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
 {
     printf("\nRunning plugins...\n");
 
-    // Block SIGINT in parent before forking
+    // Block SIGINT in the parent before forking.
+    // This prevents the parent from being interrupted by SIGINT while forking children.
     sigset_t blockset, oldset;
     sigemptyset(&blockset);
     sigaddset(&blockset, SIGINT);
     sigprocmask(SIG_BLOCK, &blockset, &oldset);
 
-    // Set up SIGINT handler in parent
+    // Set up SIGINT handler in parent to forward SIGUSR1 to children.
     struct sigaction sa;
     sa.sa_handler = forward_sigusr1;
     sigemptyset(&sa.sa_mask);
@@ -253,23 +267,29 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
         Plugin *plugin_instance = &global_plugin_instances[i];
         pid_t pid = fork();
 
-        if (pid == 0) // Child process
+        if (pid == 0)
         {
-            // Set child process name to plugin name
+            // Set child process name to plugin name for easier debugging.
             char process_name[256];
             snprintf(process_name, sizeof(process_name), "%s", plugin_instance->name);
             prctl(PR_SET_NAME, process_name, 0, 0, 0);
 
+            // Move child to its own process group so it does not receive SIGINT from the terminal.
             setpgid(0, 0);
+
+            // Ignore SIGINT in the child; only the parent should handle it.
             signal(SIGINT, SIG_IGN);
+
+            // Unblock SIGINT in the child (inherited from parent).
             sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-            // handle_plugin_action(plugin_instance, "run", "ran");
+            // Run the plugin's main logic. The plugin should handle SIGUSR1 to exit gracefully.
             handle_plugin_action(plugin_instance, PLUGIN_ACTION_RUN, PLUGIN_STATE_RUNNING);
             exit(0);
         }
-        else if (pid > 0) // Parent process
+        else if (pid > 0)
         {
+            // Optionally set parent process name for clarity.
             prctl(PR_SET_NAME, "c_plugin_arch_main", 0, 0, 0);
             global_plugin_instances[i].pid = pid;
             printf("[parent] Forked child %d for plugin %s\n", pid, plugin_instance->name);
@@ -280,20 +300,24 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
         }
     }
 
-    // Unblock SIGINT in parent after forking
+    // Unblock SIGINT in parent after forking all children.
     sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-    // Wait for all children
+    // Wait for all children to finish.
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
         if (global_plugin_instances[i].pid > 0)
         {
-            waitpid(global_plugin_instances[i].pid, NULL, 0);
+            if (waitpid(global_plugin_instances[i].pid, NULL, 0) == -1)
+            {
+                perror("waitpid failed");
+            }
+
             printf("\tPlugin %s finished running\n", plugin_file_names[i]);
         }
     }
 
-    // Restore default signal handler
+    // Restore default signal handler in parent.
     signal(SIGINT, SIG_DFL);
 }
 
@@ -302,7 +326,6 @@ void cleanup_plugins(const unsigned int plugin_count)
     printf("\nCleaning up plugins...\n");
     for (unsigned int i = 0; i < plugin_count; ++i)
     {
-        // handle_plugin_action(&global_plugin_instances[i], "cleanup", "cleaned up");
         handle_plugin_action(&global_plugin_instances[i], PLUGIN_ACTION_CLEANUP, PLUGIN_STATE_TERMINATED);
     }
 }
