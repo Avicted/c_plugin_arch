@@ -22,7 +22,7 @@ typedef enum
 
 static const char *plugin_action_names[] = {
     "init",
-    "run",
+    "ran",
     "cleanup",
 };
 
@@ -35,7 +35,7 @@ typedef enum
 
 static const char *plugin_state_names[] = {
     "initialized",
-    "running",
+    "ran to completion",
     "terminated",
 };
 

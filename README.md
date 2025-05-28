@@ -31,8 +31,8 @@ Loading plugins...
 	Successfully init plugin: Test Plugin 2 (initialized).
 
 Running plugins...
-[parent] Forked child 170027 for plugin plugin_1
-[parent] Forked child 170028 for plugin plugin_2
+[parent] Forked child 180051 for plugin Test Plugin 1
+[parent] Forked child 180052 for plugin Test Plugin 2
 	Test Plugin 1 running
 	Test Plugin 2 running
 	Test Plugin 1 working... 1
@@ -54,9 +54,9 @@ Running plugins...
 	Test Plugin 1 working... 9
 	Test Plugin 2 working... 9
 	Test Plugin 1 working... 10
-	Successfully run plugin: Test Plugin 1 (running).
+	Successfully ran plugin: Test Plugin 1 (ran to completion).
 	Test Plugin 2 working... 10
-	Successfully run plugin: Test Plugin 2 (running).
+	Successfully ran plugin: Test Plugin 2 (ran to completion).
 	Plugin plugin_1 finished running
 	Plugin plugin_2 finished running
 
@@ -65,7 +65,6 @@ Cleaning up plugins...
 	Successfully cleanup plugin: Test Plugin 1 (terminated).
 	Test Plugin 2 cleaned up
 	Successfully cleanup plugin: Test Plugin 2 (terminated).
-
 ```
 
 ### License

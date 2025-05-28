@@ -247,7 +247,7 @@ void run_plugins(char **plugin_file_names, const unsigned int plugin_count)
         {
             prctl(PR_SET_NAME, "c_plugin_arch_main", 0, 0, 0);
             global_plugin_instances[i].pid = pid;
-            printf("[parent] Forked child %d for plugin %s\n", pid, plugin_file_names[i]);
+            printf("[parent] Forked child %d for plugin %s\n", pid, plugin_instance->name);
         }
         else
         {
